@@ -1,25 +1,30 @@
 const express = require("express")
 const jwt = require('jsonwebtoken');
+const Users = require("../Models/Users")
 
-const Router = express.Router()
+ 
 
-Router.post("/", (req,res)=> {
-    let tokenHeaderKey = process.env.TOKEN_HEADER_KEY;
+ const auth = async (req,res, next)=> {
     let jwtSecretKey = process.env.JWT_SECRET_KEY;
  
     try {
-        const token = req.header(tokenHeaderKey);
- 
-        const verified = jwt.verify(token, jwtSecretKey);
-        if (verified) {
+        const token = req.cookies.jwtoken   
+        
+        if(token == undefined) res.send("Please Login First!!")
+        const verified =  jwt.verify(token, jwtSecretKey);
+        const email = verified.Email
+        const user = await Users.find({Email})
+        if (user) {
            req.body.Email = verified.Email
-           next()
+          next()
         } else {
             // Access Denied
-            return res.status(401).send(error);
+            
+            return res.status(401).send("error");
         }
     } catch (error) {
         // Access Denied
         return res.status(401).send(error);
     }
-})
+}
+module.exports = auth

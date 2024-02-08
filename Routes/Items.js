@@ -22,7 +22,9 @@ Router
     const Rating  =req.Rating
     const Price = req.Price
 
-    if(!Name || !Price) res.send(2)
+     
+
+    if(!Name || !Price) res.json(3)
     const obj = 
         {
             Name, 
@@ -46,13 +48,14 @@ Router
 })
 
 .post('/update_items', async(req, res)=> {
+    req = req.body
     const Name = req.Name
     const Desc = req.Desc
     const Img = req.Img
     const Rating  =req.Rating
     const Price = req.Price
 
-    if(!Name || !Price) res.send(2)
+    if(!Name || !Price) res.json(3)
 
     const item = await Item.find({Name})
     if(item.length == 0)res.json(2)
@@ -69,11 +72,21 @@ Router
 })
 
 .post('/delete_items', async(req, res)=> {
+    req = req.body
     const Name = req.Name
     
 
-    if(!Name) res.send(2)
+    if(!Name) res.json(3)
+    try{
     await Item.deleteOne({Name})
+    res.json(1)
+    }
+    catch(err)
+    {
+        console.log("Error is: ",err)
+        res.json(0)
+    }
+   
 })
 
 module.exports = Router

@@ -9,8 +9,9 @@ const Router = express.Router()
     req = req.body
     const Email = req.Email
 
+    if(!Email) res.json(3)
     const user = await User.find({Email})
-
+    if(user.length == 0)res.json(2)
     return await Delivery.find({UserId:user._id})
 })
 
@@ -21,11 +22,11 @@ const Router = express.Router()
     const status = req.Status
     const orderId = req.OrderId
 
+    if(!Email || !status || !orderId)res.json(3)
     const user = await User.find({Email})
-
+    if(user.length == 0)res.json(2)
     try
-    {
-         
+    { 
         await Delivery.updateOne({UserId:user._id, OrderId: orderId},{$push: {Status:status}})
         res.json(1)
     }
