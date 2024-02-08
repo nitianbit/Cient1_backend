@@ -1,7 +1,8 @@
 const express = require('express')
 const bcrypt = require("bcrypt")
 const jwt = require('jsonwebtoken');
-const ws = new WebSocket('ws://localhost:8080');
+//const WebSocket = require('ws');
+//const ws = new WebSocket('ws://localhost:443/');
 
 const Users = require('../Models/Users')
 const Address = require('../Models/Address')
@@ -67,6 +68,7 @@ Router
         res.json(0)
 })
 
+
 .get('/get_addr', async(req, res)=> {
     req = req.body
 
@@ -76,6 +78,10 @@ Router
     const addr = Address.find({UserId: user._id})
     return res.json(Address)
 })
+
+.get('/get_addr/:id', async(req, res)=> {
+    return Address.find({UserId:req.params.id})
+ }) 
 
 .post('/add_addr', async(req, res)=> {
     req = req.body
@@ -245,7 +251,7 @@ Router
             Email,
             userItems
         }
-        ws.send(JSON.stringify(sor));
+       // ws.send(JSON.stringify(sor));
         res.json(1)
     }
     catch(err)
@@ -329,6 +335,9 @@ Router
 
 })
 
+.get("/get_cart/:id", (req, res)=> {
+    return Carts.find({UserId:req.params.id})
+})
 .post('/add_cart', async(req, res)=> {
     req = req.body
 
