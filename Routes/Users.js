@@ -25,13 +25,16 @@ Router
     const Username = req.Username
     const Email = req.Email
     let password = req.Password
+     
     console.log(Username, Email, password)
-    if(!Username || !Email || !password)
-    res.json(3)
+    if(!Username || !Email || !password )
+    {return  res.json(3)
+         }
     const checkUser = await Users.find({Email})
      
     if(checkUser.length != 0) { 
-        res.json(4)
+       return res.json(4)
+         
     }
     // Hashing Password
    const Password =  crypto.pbkdf2Sync(password,  salt,  
@@ -40,7 +43,8 @@ Router
     const obj ={
         Username,
         Email,
-        Password
+        Password,
+        Type: "User"
     }
 
     try {
@@ -50,6 +54,8 @@ Router
     } catch(err)
     {
         console.log("Error on Signup: ", err)
+      return  res.json(0)
+        
     }
 })
 
@@ -60,7 +66,7 @@ Router
     let Password = req.Password
 
     if(!Email || !Password)
-    res.json(3)
+    return res.json(3)
     // Hashing Password
     const hashPass = crypto.pbkdf2Sync(Password,  
          salt, 1000, 64, `sha512`).toString(`hex`); 
@@ -71,9 +77,7 @@ Router
     if(user[0].Password == hashPass){
         console.log("Come")
         let jwtSecretKey = process.env.JWT_SECRET_KEY;
-        let data = {
-            Email
-        }
+        let data = user
      
         jwt.sign(data, jwtSecretKey, { expiresIn: "30d" }, (err, token) => {
             if(err){
@@ -93,7 +97,7 @@ Router
       
     }
     else
-        res.json(0)
+        return res.json(0)
 })
 
 
@@ -101,16 +105,16 @@ Router
     req = req.body
 
     const Email = req.Email
-    if(!Email) res.json(3)
+    if(!Email) return res.json(3)
     //Get User
     const user = await Users.find({Email})
-    if(user.length == 0)res.json(2)
-    const addr = Address.find({UserId: user._id})
-    return res.json(addr)
+    if(user.length == 0)return res.json(2)
+    const addr = Address.find({UserId: user[0]._id})
+    return  res.json(addr)
 })
 
 .get('/get_addr/:id', async(req, res)=> {
-    return Address.find({UserId:req.params.id})
+    return await Address.find({UserId:req.params.id})
  }) 
 
 .post('/add_addr', async(req, res)=> {
@@ -120,34 +124,36 @@ Router
     const AddrType = req.AddrType
     const AddrString = req.AddrString
 
-    if(!Email || !AddrType || !AddrString) res.json(3)
+    if(!Email || !AddrType || !AddrString) return res.json(3)
     //Get User
     const user = await Users.find({Email})
-    if(user.length == 0)res.json(2)
+    if(user.length == 0)return res.json(2)
 
-    let addr = await Address.find({UserId: user._id})
+    let addr = await Address.find({UserId: user[0]._id})
 
     if(addr.length == 0)
     {
-        const newAddr = new Address({})
+        const newAddr = new Address({UserId: user[0]._id})
         newAddr.save()
-        await Users.updateOne({UserId:user._id},{$push: { AddressId:newAddr._id}})
+        console.log(newAddr._id)
+        
+        await Users.updateOne({_id:user[0]._id},{$push: { AddressId:newAddr._id}} )
     }
     try {
          addr = addr[0]
         for(let i =0; i<addr?.AddrType.length; i++)
         {
             if(addr.AddrType[i] == AddrType)
-            res.json(5)
+            return res.json(5)
         }
-     const usr =   await Address.updateOne({UserId: user._id}, { $push: { AddrType, AddrString } })
-       
-    res.json(1)
+     const usr =   await Address.updateOne({UserId: user[0]._id}, { $push: { AddrType, AddrString } })
+    if(usr.acknowledged)
+    return res.json(1)
 
     }
     catch (err) { 
         console.log("Error is: ",err)
-        res.json(0)
+        return res.json(0)
     }
 })
 
@@ -160,16 +166,16 @@ Router
     const OldAddrString = req.OldAddrString
     const AddrString = req.AddrString
 
-    if(!Email || !OldAddrString || !AddrString || !AddrType || !OldAddrType) res.json(3)
+    if(!Email || !OldAddrString || !AddrString || !AddrType || !OldAddrType) return res.json(3)
     //Get User
     const user = await Users.find({Email})
-    if(user.length == 0)res.json(2)
+    if(user.length == 0)return res.json(2)
 
-    let addr = await Address.find({UserId: user._id})
+    let addr = await Address.find({UserId: user[0]._id})
 
     if(addr.length == 0)
     {
-        res.json(2)
+        return res.json(2)
     }
     try {
         addr = addr[0]
@@ -183,14 +189,14 @@ Router
                 break;
             }
         }
-        if(i == addr.AddrType.length ) res.json(6)
-        await Address.updateOne({UserId: user._id}, { $set: { AddrType: addr.AddrType, AddrString: addr.AddrString } })
-        res.json(1)
+        if(i == addr.AddrType.length ) return res.json(6)
+        await Address.updateOne({UserId: user[0]._id}, { $set: { AddrType: addr.AddrType, AddrString: addr.AddrString } })
+        return res.json(1)
 
     }
     catch (err) { 
         console.log("Error is: ",err)
-        res.json(0)
+        return res.json(0)
     }
 
 })
@@ -202,15 +208,15 @@ Router
     const OldAddrType = req.AddrType
     
     const OldAddrString = req.AddrString
-    if(!Email || !OldAddrString   ||  !OldAddrType) res.json(3)
+    if(!Email || !OldAddrString   ||  !OldAddrType) return res.json(3)
     //Get User
     const user = await Users.find({Email})
-    if(user.length == 0)res.json(2)
-    let addr = await Address.find({UserId: user._id})
+    if(user.length == 0)return res.json(2)
+    let addr = await Address.find({UserId: user[0]._id})
 
     if(addr.length == 0)
     {
-        res.json(2)
+        return res.json(2)
     }
     try {
         addr = addr[0]
@@ -224,14 +230,14 @@ Router
                 break;
             }
         }
-        if(i == addr.AddrType.length+1 ) res.json(6)
-        await Address.updateOne({UserId: user._id}, { $set: { AddrType: addr.AddrType, AddrString: addr.AddrString } })
-        res.json(1)
+        if(i == addr.AddrType.length+1 ) return res.json(6)
+        await Address.updateOne({UserId: user[0]._id}, { $set: { AddrType: addr.AddrType, AddrString: addr.AddrString } })
+        return res.json(1)
 
     }
     catch (err) { 
         console.log("Error is: ",err)
-        res.json(0)
+        return res.json(0)
     }
 
 
@@ -241,12 +247,12 @@ Router
     req = req.body
 
     const Email = req.Email
-    if(!Email)res.json(3)
+    if(!Email)return res.json(3)
     //Get User
     const user = await Users.find({Email})
-    if(user.length == 0)res.json(2)
+    if(user.length == 0)return res.json(2)
     // PreProcessing of data
-    const order = await Orders.find({UserId: user._id})
+    const order = await Orders.find({UserId: user[0]._id})
     let Items = []
     order.ItemId.map(async(el)=>{
         const item = await Item.find({_id:el})
@@ -260,7 +266,7 @@ Router
         Status: order.Status,
         ItemCount: order.ItemCount
     }
-    res.json(obj)
+    return res.json(obj)
 
 })
 
@@ -269,46 +275,56 @@ Router
 })
 .post('/add_order', async (req, res)=> {
     req = req.body
-
+     
     const Email = req.Email
     const userItems = req.Items
+   
     console.log(userItems[0])
-    if(!Email || !userItems) res.json(3)
+    if(!Email || !userItems) return res.json(3)
     //Get User
     const user = await Users.find({Email})
-    if(user.length == 0)res.json(2)
+    if(user.length == 0)return res.json(2)
 
-    const order = await Orders.find({UserId: user._id})
+    const order = await Orders.find({UserId: user[0]._id})
     if(order.length == 0)
     {
-        const newOrder = new Orders({UserId: user._id})
+        const newOrder = new Orders({UserId: user[0]._id,ItemId:[],Status:[],ItemCount:[]})
         newOrder.save()
-        await Users.updateOne({UserId:user._id},{$push: { OrdersId:newOrder._id}})
+         
+        await Users.updateOne({_id:user[0]._id},{$push: { OrdersId:newOrder._id}})
     }
     try
     {
-        let ItemIds = []
-        userItems?.map( async (el)=>{
-            if(el?.Name == undefined)res.json(6)
-            const item = await Item.find({Name: el.Name, Desc: el?.Desc, Img:el?.Img})
+         
+       let promise =    userItems?.map( async (el)=>{
+            if(el?.Name == undefined)return res.json(6)
+            const item = await Item.find({Name: el.Name})
+        console.log(item)
             if (item.length !=0)
-            ItemIds.push(item[0]._id)
-            else res.json(6)
+            return item[0]._id
+            else return res.json(6)
         })
         const count = userItems.length
-
-        await Orders.updateOne({UserId: user._id}, { $push: { ItemId:{ $each:ItemIds} , Status:"Pending", ItemCount:count} })
+        Promise.all(promise).then(async(ItemIds)=>{
+            console.log(ItemIds)
+            const or =  await Orders.updateOne({UserId: user[0]._id}, { $push: { ItemId:{ $each:ItemIds} , Status:"Pending", ItemCount:count} })
+            if(or.acknowledged)
+        return res.json(1)
+        }).catch((err)=> {
+            console.log("Errori s: ",err)
+            return res.json(0)
+        })
         const sor = {
             Email,
             userItems
         }
        // ws.send(JSON.stringify(sor));
-        res.json(1)
+       
     }
     catch(err)
     {
         console.log("Error is: ", err)
-        res.json(0)
+        return res.json(0)
     }
 })
 
@@ -319,63 +335,74 @@ Router
     const status = req.status
     const index = req.index
 
-    if(!Email || !status || !index) res.json(3)
+    if(!Email || !status || !index) return res.json(3)
     //Get User
+console.log(Email)
     const user = await Users.find({Email})
-    if(user.length == 0) res.json(2)
-    const order = await Orders.find({UserId: user._id})
+    if(user.length == 0) return res.json(2)
+    console.log(user)
+    let order = await Orders.find({UserId: user[0]._id})
+    order = order[0]
+    console.log(order)
     try{
-    let statusArr = order.Status[index]
-    statusArr[index] = status
-    await Orders.updateOne({UserId: user._id}, {$push: {Status:statusArr}})
+    let statusArr = order.Status 
+    statusArr[index - 1] = status
+    console.log(order.Status)
+    console.log(statusArr)
+    console.log(index - 1)
+    await Orders.updateOne({UserId: user[0]._id}, {$set:{Status:statusArr}})
     
     }
     catch(err)
     {
         console.log("Error is: ", err)
-        res.json(0)
+        return res.json(0)
     }
     if(status == 'Confirm')
     {
         try{
-            const delivery = await Delivery.find({UserId:user._id})
+            console.log("Come")
+            const delivery = await Delivery.find({UserId:user[0]._id})
             if(delivery.length == 0)
             {
-                const no = await Delivery({UserId:user._id})
+                const no = await Delivery({UserId:user[0]._id})
                 no.save()
+             
+                await Users.updateOne({_id:user[0]._id},{$push: { DeliveryId:no._id}})
             }
             
-            Delivery.updateOne({UserId: user._id},{$push:{OrderId:order._id, Status:status}})
-            res.json(1)
+            await Delivery.updateOne({UserId: user[0]._id},{$push:{OrderId:order._id, Status:status}})
+            return res.json(1)
         }
         catch(err)
         {
             console.log("Error is: ",err)
-            res.json(0)
+            return res.json(0)
         }
     }
     else
-    res.json(1)
+    return res.json(1)
 })
 
 .get('/get_cart', async(req, res)=> {
     req = req.body
 
     const Email = req.Email
-    if(!Email) res.json(3)
+    if(!Email) return res.json(3)
     //Get User
     const user = await Users.find({Email})
     
-    if(user.length == 0)res.json(2)
-    const cart = await Carts.find({UserId:user._id})
+    if(user.length == 0)return res.json(2)
+    const cart = await Carts.find({UserId:user[0]._id})
     if(cart.length == 0)
-    res.json(2)
+    return res.json(2)
     try{
         let items = []
-        cart.ItemId.map(async(el)=>{
+      const promise =  cart.ItemId.map(async(el)=>{
             const item = await Item.find({_id:el})
             items.push(item)
         })
+        Promise.all(promise)
         const obj={
             items,
             Status: cart.Status
@@ -384,13 +411,13 @@ Router
     catch(err)
     {
         console.log("Error is: ",err);
-        res.json(0)
+        return res.json(0)
     }
 
 })
 
-.get("/get_cart/:id", (req, res)=> {
-    return Carts.find({UserId:req.params.id})
+.get("/get_cart/:id", async(req, res)=> {
+    return await Carts.find({UserId:req.params.id})
 })
 .post('/add_cart', async(req, res)=> {
     req = req.body
@@ -399,33 +426,41 @@ Router
     const userItems = req.Items
     const status = req.Status
 
-    if(!Email || !userItems || !status) res.json(3)
+    if(!Email || !userItems || !status) return res.json(3)
     //Get User
     const user = await Users.find({Email})
-    if(user.length == 0)res.json(2)
-    const cart = await Carts.find({UserId: user._id})
+    if(user.length == 0)return res.json(2)
+    const cart = await Carts.find({UserId: user[0]._id})
 
     if(cart.length == 0)
     {
-        const newCart = new Carts({UserId: user._id})
+        const newCart = new Carts({UserId: user[0]._id})
         newCart.save()
-        await Users.updateOne({UserId:user._id},{$push: { CartId:newCart._id}})
+        await Users.updateOne({_id:user[0]._id},{$push: { CartId:newCart._id}})
     }
     try
     {
-        let ItemIds = []
-        userItems.map( async (el)=>{
-            const item = await Item.find({Name: el.Name, Desc: el.Desc, Img:el.Img})
-            ItemIds.push(item._id)
-        })
-        
-        await Carts.updateOne({UserId: user._id}, { $push: { ItemId:{ $each:ItemIds} , Status: {$each:status}} })
-        res.json(1)
+    //     let ItemIds = []
+    //    const promise =  userItems.map( async (el)=>{
+    //         const item = await Item.find({Name: el.Name })
+    //         if(item.length!=0)
+    //         ItemIds.push(item[0]?._id)
+    //         else return res.json(6)
+    //     })
+    //     Promise.all(promise).then(async()=>{
+        const cartItem = await Item.find({Name:userItems.Name})
+       const car = await Carts.updateOne({UserId: user[0]._id}, { $push: { ItemId:cartItem[0]._id , Status:  status} })
+       if(car.acknowledged)
+        return res.json(1)
+    // }).catch((err)=> {
+    //     console.log("Error is: ",err)
+    //     return res.json(0)
+    // })
     }
     catch(err)
     {
         console.log("Error is: ", err)
-        res.json(0)
+        return res.json(0)
     }
 })
 
@@ -434,26 +469,46 @@ Router
 
     const Email = req.Email
     const index = req.index
-    if(!Email || !index)res.json(3)
+    if(!Email || !index)return res.json(3)
     //Get User
     const user = await Users.find({Email})
-    if(user.length == 0)res.json(2)
-    const cart = await Carts.find({UserId:user._id})
-    if(cart.length == 0)res.json(3)
-    let itemId = cart.ItemId
-    let statuscart = cart.Status
+    if(user.length == 0)return res.json(2)
+    const cart = await Carts.find({UserId:user[0]._id})
+    if(cart.length == 0)return res.json(3)
+    let itemId = cart[0].ItemId
+    let statuscart = cart[0].Status
+    console.log(itemId)
+    console.log(index)
+    console.log(statuscart)
     itemId.splice(index,1)
     statuscart.splice(index,1)
+    console.log(itemId)
+    console .log(statuscart)
     try
     {
-        await Carts.updateOne({UserID:user._id},{$push:{ItemId:itemId, Status:statuscart}})
-        res.json(1)
+       const car = await Carts.updateOne({UserId:user[0]._id}, {$set:{ItemId:[], Status:[]}})
+       console.log(car)
+       if(car.acknowledged)
+        return res.json(1)
     }
     catch(err)
     {
         console.log("Error is: ", err)
-        res.json(0)
+        return res.json(0)
     }
 })
 
+.get('/get_items', async (req, res)=> {
+    return await Item.find({})
+})
+
+.get('/get_delivery_details', async(req, res)=> {
+    req = req.body
+    const Email = req.Email
+
+    if(!Email) return res.json(3)
+    const user = await User.find({Email})
+    if(user.length == 0)return res.json(2)
+    return await Delivery.find({UserId:user._id})
+})
 module.exports = Router

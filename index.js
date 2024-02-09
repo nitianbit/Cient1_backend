@@ -17,6 +17,7 @@ const PaymentRouter = require("./Routes/Payement")
 const ItemsRouter = require("./Routes/Items")
 const DeliveryRouter = require("./Routes/Delivery")
 const auth = require("./Middelwares/Authenticate")
+const adminAuth = require("./Middelwares/AdminAuthentication")
 
 //Literals
 const PORT = process.env.PORT  
@@ -40,6 +41,7 @@ app.get("/",(req, res)=> {
 })
 // app.use(auth)
 app.use("/Users", UsersRouter)
+//app.use(adminAuth)
 app.use("/Items",ItemsRouter)
 app.use("/Payment", PaymentRouter)
 app.use("/Delivery", DeliveryRouter)

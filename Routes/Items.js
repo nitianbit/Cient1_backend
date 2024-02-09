@@ -24,7 +24,7 @@ Router
 
      
 
-    if(!Name || !Price) res.json(3)
+    if(!Name || !Price) return res.json(3)
     const obj = 
         {
             Name, 
@@ -38,12 +38,12 @@ Router
         {
             const item = new Item(obj)
             item.save()
-            res.json(1)
+            return res.json(1)
         }
         catch(err)
         {
             console.log("Error is: ",err)
-            res.json(0)
+            return res.json(0)
         }
 })
 
@@ -55,19 +55,19 @@ Router
     const Rating  =req.Rating
     const Price = req.Price
 
-    if(!Name || !Price) res.json(3)
+    if(!Name || !Price) return res.json(3)
 
     const item = await Item.find({Name})
-    if(item.length == 0)res.json(2)
+    if(item.length == 0)return res.json(2)
     try
     {
         await Item.updateOne({Name},{Desc,Img,Rating,Price})
-        res.json(1)
+        return res.json(1)
     }
     catch(err)
     {
         console.log("Error is: ",err)
-        res.json(0)
+        return res.json(0)
     }
 })
 
@@ -76,15 +76,15 @@ Router
     const Name = req.Name
     
 
-    if(!Name) res.json(3)
+    if(!Name) return res.json(3)
     try{
     await Item.deleteOne({Name})
-    res.json(1)
+    return res.json(1)
     }
     catch(err)
     {
         console.log("Error is: ",err)
-        res.json(0)
+        return res.json(0)
     }
    
 })

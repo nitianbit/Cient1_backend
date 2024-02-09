@@ -10,7 +10,8 @@ const usersSchema = new Schema ({
     AddressId: [{type:String}],
     CartId: [{type:String}],
     PaymentId: [{type:String}],
-    DeliveryId: [{type:String}]
+    DeliveryId: [{type:String}],
+    Type:{type:String}
 },{timestamps: true})
 
 const users = mongoose.model('User', usersSchema)

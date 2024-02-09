@@ -13,14 +13,13 @@ const Users = require("../Models/Users")
         if(token == undefined) res.send("Please Login First!!")
         const verified =  jwt.verify(token, jwtSecretKey);
         const Email = verified.user.Email
-        
-        if (Email) {
-           req.body.Email = Email
-          next()
-        } else {
-            // Access Denied
-            
-            return res.status(401).send("error");
+        if(verified.user.Type != 'Admin')
+        {
+            res.send("Please Login As Admin!!")
+        }
+        else
+        {
+            next()
         }
     } catch (error) {
         // Access Denied
